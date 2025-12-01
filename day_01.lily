@@ -1,0 +1,44 @@
+#[
+    Advent of Code 2025
+    Day 01: Secret Entrance
+]#
+
+var dial = 50
+
+var times_zero_was_reached = 0
+var times_zero_was_reached_or_passed = 0
+
+for line in File.read_to_string("inputs/day_01.txt").split("\n"): {
+    var amount = line.slice(1).parse_i().unwrap()
+
+    if line[0] == 'R': {
+        dial += amount
+        while dial >= 100: {
+            dial -= 100
+            times_zero_was_reached_or_passed += 1
+        }
+    else:
+        if dial == 0: {
+            dial = 100 - amount
+        else:
+            dial -= amount
+        }
+
+        while dial < 0: {
+            dial += 100
+            times_zero_was_reached_or_passed += 1
+        }
+
+        if dial == 0: {
+            times_zero_was_reached_or_passed += 1
+        }
+    }
+
+    if dial == 0: {
+        times_zero_was_reached += 1
+    }
+}
+
+print("Part 1: {}\nPart 2: {}".format(
+    times_zero_was_reached, times_zero_was_reached_or_passed
+))
