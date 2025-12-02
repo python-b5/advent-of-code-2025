@@ -1,0 +1,57 @@
+#[
+    Advent of Code 2025
+    Day 02: Gift Shop
+]#
+
+var invalid_sum_half_width = 0
+var invalid_sum_any_width = 0
+
+for range in File.read_to_string("inputs/day_02.txt").split(",").map(|string|
+    string.split("-").map(String.parse_i).map(Option.unwrap)
+): {
+    for id in range[0]...range[1]: {
+        var string = id.to_s()
+        var size = string.size()
+        var half_width = size / 2
+
+        if string.slice(0, half_width) == string.slice(half_width): {
+            invalid_sum_half_width += id
+            invalid_sum_any_width += id
+            continue
+        }
+
+        for width in 1...size: {
+            if size % width: {
+                continue
+            }
+
+            var left = 0
+            var right = width
+            var previous = string.slice(left, right)
+            var invalid = true
+
+            do: {
+                left += width
+                right += width
+
+                var current = string.slice(left, right)
+
+                if current != previous: {
+                    invalid = false
+                    break
+                }
+
+                previous = current
+            } while right < size
+
+            if invalid: {
+                invalid_sum_any_width += id
+                break
+            }
+        }
+    }
+}
+
+print("Part 1: {}\nPart 2: {}".format(
+    invalid_sum_half_width, invalid_sum_any_width
+))
