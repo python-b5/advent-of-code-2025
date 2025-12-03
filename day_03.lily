@@ -1,0 +1,42 @@
+#[
+    Advent of Code 2025
+    Day 03: Lobby
+]#
+
+define find_maximum_joltage(
+    line: String, size: Integer, batteries: Integer
+): Integer {
+    var index = 0
+    var joltage = 0
+
+    do: {
+        var largest = 0
+        for i in index...size - batteries: {
+            var battery = line[i] - '0'
+            if battery > largest: {
+                largest = battery
+                index = i
+            }
+        }
+
+        index += 1
+        joltage = joltage * 10 + largest
+
+        batteries -= 1
+    } while batteries > 0
+
+    return joltage
+}
+
+var output_joltage_two_batteries = 0
+var output_joltage_twelve_batteries = 0
+
+for line in File.read_to_string("inputs/day_03.txt").split("\n"): {
+    var size = line.size()
+    output_joltage_two_batteries += find_maximum_joltage(line, size, 2)
+    output_joltage_twelve_batteries += find_maximum_joltage(line, size, 12)
+}
+
+print("Part 1: {}\nPart 2: {}".format(
+    output_joltage_two_batteries, output_joltage_twelve_batteries
+))
