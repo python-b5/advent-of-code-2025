@@ -1,0 +1,105 @@
+#[
+    Advent of Code 2025
+    Day 04: Printing Department
+]#
+
+import (Set, integer_pair_hash) "modules/set"
+
+var lines = File.read_to_string("inputs/day_04.txt").split("\n")
+
+var width = lines[0].size()
+var height = lines.size()
+
+var adjacent = List.fill(height, (|_| List.repeat(width, -1)))
+
+for y, line in lines: {
+    for x, char in line: {
+        if char != '@': {
+            continue
+        }
+
+        var count = 0
+
+        for delta_y in -1...1: {
+            var adjacent_y = y + delta_y
+            if adjacent_y < 0 || adjacent_y >= height: {
+                continue
+            }
+
+            for delta_x in -1...1: {
+                if delta_y == 0 && delta_x == 0: {
+                    continue
+                }
+
+                var adjacent_x = x + delta_x
+                if adjacent_x < 0 || adjacent_x >= width: {
+                    continue
+                }
+
+                if lines[adjacent_y][adjacent_x] == '@': {
+                    count += 1
+                }
+            }
+        }
+
+        adjacent[y][x] = count
+    }
+}
+
+var to_remove: Set[Tuple[Integer, Integer]] = Set(integer_pair_hash)
+for y, row in adjacent: {
+    for x, count in row: {
+        if count >= 0 && count < 4: {
+            to_remove.add(<[x, y]>)
+        }
+    }
+}
+
+print("Part 1: {}".format(to_remove.size()))
+
+var total_rolls_removed = 0
+
+do: {
+    var to_remove_new: Set[Tuple[Integer, Integer]] = Set(integer_pair_hash)
+
+    to_remove.each(|position| adjacent[position[1]][position[0]] = -1)
+    to_remove.each(|position|
+        var x = position[0]
+        var y = position[1]
+
+        for delta_y in -1...1: {
+            var adjacent_y = y + delta_y
+            if adjacent_y < 0 || adjacent_y >= height: {
+                continue
+            }
+
+            for delta_x in -1...1: {
+                if delta_y == 0 && delta_x == 0: {
+                    continue
+                }
+
+                var adjacent_x = x + delta_x
+                if adjacent_x < 0 || adjacent_x >= width: {
+                    continue
+                }
+
+                var row = adjacent[adjacent_y]
+
+                if row[adjacent_x] < 0: {
+                    continue
+                }
+
+                row[adjacent_x] -= 1
+
+                if row[adjacent_x] < 4: {
+                    to_remove_new.add(<[adjacent_x, adjacent_y]>)
+                }
+            }
+        }
+    )
+
+    total_rolls_removed += to_remove.size()
+    to_remove = to_remove_new
+} while to_remove.size()
+
+print("Part 2: {}".format(total_rolls_removed))

@@ -1,0 +1,39 @@
+class Set[A](private var @hash_function: Function(A => Integer)) {
+    private var @hashes: Hash[Integer, Unit] = []
+    private var @values: List[A] = []
+
+    public define size: Integer {
+        return @hashes.size()
+    }
+
+    public define add(value: A) {
+        var hash = @hash_function(value)
+        if !@hashes.has_key(hash): {
+            @hashes[hash] = unit
+            @values.push(value)
+        }
+    }
+
+    public define remove(value: A) {
+        @hashes.delete(@hash_function(value))
+    }
+
+    public define contains(value: A): Boolean {
+        return @hashes.has_key(@hash_function(value))
+    }
+
+    public define each(fn: Function(A)) {
+        @values.each(fn)
+    }
+}
+
+define integer_pair_hash(pair: Tuple[Integer, Integer]): Integer {
+    var first = pair[0]
+    var second = pair[1]
+
+    return (
+        first >= second
+        ? first * first + first + second
+        : first + second * second
+    )
+}
