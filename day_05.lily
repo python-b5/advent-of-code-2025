@@ -8,30 +8,30 @@ var line_groups = File
     .split("\n\n")
     .map(|string| string.split("\n"))
 
-var ranges = line_groups[0].map(|line|
-    var endpoints = line.split("-")
-    <[endpoints[0].parse_i().unwrap(), endpoints[1].parse_i().unwrap()]>
-).sort(|a, b| a[0] - b[0])
-
-print("Part 1: {}\nPart 2: {}".format(
-    line_groups[1]
-        .map(String.parse_i)
-        .map(Option.unwrap)
-        .count(|id| ranges.any(|range| id >= range[0] && id <= range[1])),
-    ranges
-        .accumulate([].@(List[Tuple[Integer, Integer]]), (|merged_ranges, range|
-            if merged_ranges: {
-                var previous = merged_ranges[-1]
-                if range[0] <= previous[1]: {
-                    if range[1] > previous[1]: {
-                        previous[1] = range[1]
-                    }
-                else:
-                    merged_ranges.push(range)
+var ranges = line_groups[0]
+    .map(|line|
+        var endpoints = line.split("-")
+        <[endpoints[0].parse_i().unwrap(), endpoints[1].parse_i().unwrap()]>
+    )
+    .sort(|a, b| a[0] - b[0])
+    .accumulate([].@(List[Tuple[Integer, Integer]]), (|merged_ranges, range|
+        if merged_ranges: {
+            var previous = merged_ranges[-1]
+            if range[0] <= previous[1]: {
+                if range[1] > previous[1]: {
+                    previous[1] = range[1]
                 }
             else:
                 merged_ranges.push(range)
             }
-        ))
-        .fold(0, (|sum, range| sum + range[1] - range[0] + 1))
+        else:
+            merged_ranges.push(range)
+        }
+    ))
+
+print("Part 1: {}\nPart 2: {}".format(
+    line_groups[1].map(|line| line.parse_i().unwrap()).count(|id|
+        ranges.any(|range| id >= range[0] && id <= range[1])
+    ),
+    ranges.fold(0, (|sum, range| sum + range[1] - range[0] + 1))
 ))
