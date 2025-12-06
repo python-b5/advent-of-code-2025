@@ -1,0 +1,86 @@
+#[
+    Advent of Code 2025
+    Day 06: Trash Compactor
+]#
+
+var lines = File.read_to_string("inputs/day_06.txt").split("\n")
+var last_line = lines.pop()
+
+var operators: List[Byte] = []
+var column_widths: List[Integer] = []
+var last_operator_index = 0
+
+for i, char in last_line: {
+    if char == ' ': {
+        continue
+    }
+
+    operators.push(char)
+
+    if i > 0: {
+        column_widths.push(i - last_operator_index - 1)
+    }
+
+    last_operator_index = i
+}
+
+column_widths.push(last_line.size() - last_operator_index)
+
+var rows = lines.size()
+var columns = operators.size()
+
+var numbers_horizontal: List[List[Integer]] = List.fill(columns, (|_|
+    List.repeat(rows, 0)
+))
+
+var numbers_vertical: List[List[Integer]] = List.fill(columns, (|index|
+    List.repeat(column_widths[index], 0)
+))
+
+for i, line in lines: {
+    var column = 0
+    for substring in line.split(" "): {
+        if substring.size() == 0: {
+            continue
+        }
+
+        numbers_horizontal[column][i] = substring.parse_i().unwrap()
+        column += 1
+    }
+
+    var column_start = 0
+    for j, column_width in column_widths: {
+        var numbers = numbers_vertical[j]
+        for k in 0...column_width - 1: {
+            var char = line[column_start + k]
+            if char != ' ': {
+                numbers[k] = numbers[k] * 10 + char - '0'
+            }
+        }
+
+        column_start += column_width + 1
+    }
+}
+
+define add(sum: Integer, number: Integer): Integer {
+    return sum + number
+}
+
+define multiply(product: Integer, number: Integer): Integer {
+    return product * number
+}
+
+var total_horizontal = 0
+var total_vertical = 0
+
+for i, operator in operators: {
+    if operator == '+': {
+        total_horizontal += numbers_horizontal[i].fold(0, add)
+        total_vertical += numbers_vertical[i].fold(0, add)
+    else:
+        total_horizontal += numbers_horizontal[i].fold(1, multiply)
+        total_vertical += numbers_vertical[i].fold(1, multiply)
+    }
+}
+
+print("Part 1: {}\nPart 2: {}".format(total_horizontal, total_vertical))
