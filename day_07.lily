@@ -1,0 +1,32 @@
+#[
+    Advent of Code 2025
+    Day 07: Laboratories
+]#
+
+var lines = File.read_to_string("inputs/day_07.txt").split("\n")
+
+var beam_counts = List.repeat(lines[0].size(), 0)
+beam_counts[lines[0].find("S").unwrap()] = 1
+
+var splits = 0
+
+for line in lines: {
+    for i, char in line: {
+        if char != '^': {
+            continue
+        }
+
+        var count = beam_counts[i]
+        if count > 0: {
+            beam_counts[i - 1] += count
+            beam_counts[i + 1] += count
+            beam_counts[i] = 0
+
+            splits += 1
+        }
+    }
+}
+
+print("Part 1: {}\nPart 2: {}".format(
+    splits, beam_counts.fold(0, (|sum, count| sum + count))
+))
