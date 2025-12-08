@@ -1,0 +1,86 @@
+# order_test should return whether the first value should be given higher
+# priority than the second value. It determines whether the heap is a min or max
+# heap. Operators aren't functions in Lily, and we can't fully qualify generic
+# types, so unfortunately the function has to be defined manually even for
+# primitive types supporting the < and > operators.
+class Heap[A](private var @order_test: Function(A, A => Boolean)) {
+    private var @values: List[A] = []
+
+    public define size: Integer {
+        return @values.size()
+    }
+
+    public define push(value: A): self {
+        @values.push(value)
+
+        var current_index = @values.size() - 1
+        while current_index > 0: {
+            var parent_index = (current_index - 1) / 2
+
+            var current_value = @values[current_index]
+            var parent_value = @values[parent_index]
+
+            if @order_test(parent_value, current_value): {
+                break
+            }
+
+            @values[current_index] = parent_value
+            @values[parent_index] = current_value
+
+            current_index = parent_index
+        }
+
+        return self
+    }
+
+    public define pop: A {
+        var size = @values.size()
+
+        if size == 0: {
+            raise RuntimeError("Cannot pop from an empty heap.")
+        }
+
+        # If there's only one value in the heap, there's no additional work to
+        # be done, and so we can just pop and return the value directly.
+        if size == 1: {
+            return @values.pop()
+        }
+
+        var root_value = @values[0]
+        @values[0] = @values.pop()
+        size -= 1
+
+        var current_index = 0
+        do: {
+            var left_index = current_index * 2 + 1
+            var right_index = left_index + 1
+
+            var has_left = left_index < size
+            var has_right = right_index < size
+
+            if !has_left && !has_right: {
+                break
+            }
+
+            var child_index = (has_left ? (has_right ? (
+                @order_test(@values[left_index], @values[right_index])
+                ? left_index
+                : right_index
+            ) : left_index) : right_index)
+
+            var current_value = @values[current_index]
+            var child_value = @values[child_index]
+
+            if @order_test(current_value, child_value): {
+                break
+            }
+
+            @values[current_index] = child_value
+            @values[child_index] = current_value
+
+            current_index = child_index
+        } while true
+
+        return root_value
+    }
+}

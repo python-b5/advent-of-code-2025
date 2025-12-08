@@ -1,0 +1,71 @@
+#[
+    Advent of Code 2025
+    Day 08: Playground
+]#
+
+import (Heap) "modules/heap"
+
+var boxes = File.read_to_string("inputs/day_08.txt").split("\n").map(|line|
+    line.split(",").map(String.parse_i).map(Option.unwrap)
+)
+
+var max_index = boxes.size() - 1
+var tuples: Heap[Tuple[Integer, Integer, Integer]] = Heap(|a, b| a[2] < b[2])
+
+for i in 0...max_index: {
+    for j in i + 1...max_index: {
+        var box_1 = boxes[i]
+        var box_2 = boxes[j]
+
+        var delta_x = box_2[0] - box_1[0]
+        var delta_y = box_2[1] - box_1[1]
+        var delta_z = box_2[2] - box_1[2]
+
+        tuples.push(<[i, j, (
+            delta_x * delta_x + delta_y * delta_y + delta_z * delta_z
+        )]>)
+    }
+}
+
+var circuits = List.fill(boxes.size(), (|index| [index => unit]))
+
+var circuit_indices: Hash[Integer, Integer] = []
+for i in 0...max_index: {
+    circuit_indices[i] = i
+}
+
+var connections = 0
+while tuples.size(): {
+    var tuple = tuples.pop()
+    var index_1 = circuit_indices[tuple[0]]
+    var index_2 = circuit_indices[tuple[1]]
+
+    if index_1 != index_2: {
+        var circuit = circuits[index_1]
+        circuits[index_2].keys().each(|key|
+            circuit[key] = unit
+            circuit_indices[key] = index_1
+        )
+
+        circuits.delete_at(index_2)
+        circuit_indices.each_pair(|key, index|
+            if index > index_2: {
+                circuit_indices[key] -= 1
+            }
+        )
+    }
+
+    connections += 1
+    if connections == 1000: {
+        print("Part 1: {}".format(circuits
+            .sort(|a, b| b.size() - a.size())
+            .slice(0, 3)
+            .fold(1, (|product, circuit| product * circuit.size()))
+        ))
+    }
+
+    if circuits.size() == 1: {
+        print("Part 2: {}".format(boxes[tuple[0]][0] * boxes[tuple[1]][0]))
+        break
+    }
+}
