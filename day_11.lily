@@ -1,0 +1,66 @@
+#[
+    Advent of Code 2025
+    Day 11: Reactor
+]#
+
+var outputs: Hash[String, List[String]] = []
+for line in File.read_to_string("inputs/day_11.txt").split("\n"): {
+    var parts = line.split(": ")
+    outputs[parts[0]] = parts[1].split(" ")
+}
+
+var cached_paths: Hash[String, Integer] = []
+define paths_between(start: String, end: String): Integer {
+    if start == end: {
+        return 1
+    }
+
+    if start == "out": {
+        return 0
+    }
+
+    var key = start ++ end
+
+    with cached_paths.get(key) as Some(paths): {
+        return paths
+    }
+
+    var paths = 0
+    for output in outputs[start]: {
+        paths += paths_between(output, end)
+    }
+
+    cached_paths[key] = paths
+    return paths
+}
+
+print("Part 1: {}".format(paths_between("you", "out")))
+
+var queue = ["svr"]
+var first_midpoint = ""
+
+do: {
+    var device = queue.shift()
+
+    if device == "dac": {
+        first_midpoint = "dac"
+        break
+    }
+
+    if device == "fft": {
+        first_midpoint = "fft"
+        break
+    }
+
+    for output in outputs[device]: {
+        queue.push(output)
+    }
+} while queue
+
+var second_midpoint = (first_midpoint == "dac" ? "fft" : "dac")
+
+print("Part 2: {}".format(
+    paths_between("svr", first_midpoint)
+    * paths_between(first_midpoint, second_midpoint)
+    * paths_between(second_midpoint, "out")
+))
