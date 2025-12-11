@@ -1,0 +1,206 @@
+#[
+    Advent of Code 2025
+    Day 10: Factory
+]#
+
+var total_presses_for_lights = 0
+var total_presses_for_joltages = 0
+
+for line in File.read_to_string("inputs/day_10.txt").split("\n"): {
+    var parts = line.split(" ")
+
+    var lights: List[Boolean] = []
+    parts.shift().slice(1, -1).to_bytestring().each_byte(|char|
+        lights.push(char == '#')
+    )
+
+    var max_light_index = lights.size() - 1
+
+    var required_state = 0
+    for i, light in lights.reverse(): {
+        if light: {
+            required_state |= 1 << i
+        }
+    }
+
+    var buttons: List[List[Integer]] = []
+    var required_joltages: List[Integer] = []
+
+    for part in parts: {
+        var numbers = part
+            .slice(1, -1)
+            .split(",")
+            .map(String.parse_i)
+            .map(Option.unwrap)
+
+        if part[0] == '(': {
+            buttons.push(numbers)
+        else:
+            required_joltages = numbers
+            break
+        }
+    }
+
+    var button_count = buttons.size()
+    var max_button_index = button_count - 1
+    var button_mask_limit = 1 << button_count
+    var reached_required_state = false
+
+    for presses in 1...button_count: {
+        var button_mask = (1 << presses) - 1
+        while button_mask < button_mask_limit: {
+            var state = 0
+
+            for button_index in 0...max_button_index: {
+                if button_mask & 1 << max_button_index - button_index: {
+                    for light_index in buttons[button_index]: {
+                        state ^= 1 << max_light_index - light_index
+                    }
+                }
+            }
+
+            if state == required_state: {
+                total_presses_for_lights += presses
+                reached_required_state = true
+                break
+            }
+
+            # Use Gosper's hack to find the next combination of presses with the
+            # same length. This lets us avoid having to iterate through every
+            # combination to find the shortest working one.
+            var c = button_mask & -button_mask
+            var r = button_mask + c
+            button_mask = (((r ^ button_mask) >> 2) / c) | r
+        }
+
+        if reached_required_state: {
+            break
+        }
+    }
+
+    var rows = required_joltages.map_with_index(|joltage, index|
+        buttons.map(|button| button.any(|i| i == index).to_i()).push(joltage)
+    )
+
+    var width = buttons.size()
+    var height = rows.size()
+
+    var row = 0
+    var pivot_columns: List[Integer] = []
+    var free_columns: List[Integer] = []
+
+    for column in 0...width - 1: {
+        var pivot = -1
+
+        for i in row...height - 1: {
+            if rows[i][column]: {
+                pivot = i
+                break
+            }
+        }
+
+        if pivot == -1: {
+            free_columns.push(column)
+            continue
+        }
+
+        var temp = rows[row]
+        rows[row] = rows[pivot]
+        rows[pivot] = temp
+
+        for i in row + 1...height - 1: {
+            var value = rows[i][column]
+            if value: {
+                var pivot_value = rows[row][column]
+                for j in 0...width: {
+                    rows[i][j] = rows[i][j] * pivot_value - rows[row][j] * value
+                }
+            }
+        }
+
+        row += 1
+        pivot_columns.push(column)
+    }
+
+    var free_variable_combinations = 1
+    var free_variable_bounds = free_columns.map(|column|
+        # Buttons can't possibly be pushed more times than the counter they
+        # affect with the lowest required joltage.
+        var bound = buttons[column].fold(-1, (|minimum, index|
+            var joltage = required_joltages[index]
+
+            if joltage < minimum || minimum == -1: {
+                return joltage
+            }
+
+            minimum
+        )) + 1
+
+        free_variable_combinations *= bound
+        bound
+    )
+
+    var free_column_count = free_columns.size()
+    var free_variables = List.repeat(free_column_count, 0)
+
+    var minimum_presses = -1
+
+    for _ in 1...free_variable_combinations: {
+        var solution = List.repeat(width, 0)
+
+        for i, column in free_columns: {
+            solution[column] = free_variables[i]
+        }
+
+        var valid = true
+
+        for i in pivot_columns.size() - 1...0 by -1: {
+            var column = pivot_columns[i]
+            var joltage = rows[i][width]
+
+            for j in column + 1...width - 1: {
+                joltage -= rows[i][j] * solution[j]
+            }
+
+            var value = rows[i][column]
+
+            if joltage % value: {
+                valid = false
+                break
+            }
+
+            joltage /= value
+
+            if joltage < 0: {
+                valid = false
+                break
+            }
+
+            solution[column] = joltage
+        }
+
+        for i in 0...free_column_count - 1: {
+            free_variables[i] += 1
+            if free_variables[i] == free_variable_bounds[i]: {
+                free_variables[i] = 0
+            else:
+                break
+            }
+        }
+
+        if !valid: {
+            continue
+        }
+
+        var presses = solution.fold(0, (|sum, value| sum + value))
+        if presses < minimum_presses || minimum_presses == -1: {
+            minimum_presses = presses
+        }
+    }
+
+    total_presses_for_joltages += minimum_presses
+}
+
+print("Part 1: {}\nPart 2: {}".format(
+    total_presses_for_lights, total_presses_for_joltages
+))
