@@ -1,0 +1,19 @@
+#[
+    Advent of Code 2025
+    Day 12: Christmas Tree Farm
+]#
+
+print("Part 1: {}".format(
+    File
+        .read_to_string("inputs/day_12.txt")
+        .split("\n\n")[-1]
+        .split("\n")
+        .count(|line|
+            var parts = line.split(": ")
+            var size = parts[0].split("x")
+
+            parts[1].split(" ").map(|count| count.parse_i().unwrap() * 9).fold(
+                0, (|sum, count| sum + count)
+            ) <= size[0].parse_i().unwrap() * size[1].parse_i().unwrap()
+        )
+))
